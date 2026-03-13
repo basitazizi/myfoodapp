@@ -1,0 +1,66 @@
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-dark: #182818;
+  --bg-darker: #0f1a0f;
+  --red: #D32F2F;
+  --red-light: #EF5350;
+  --black: #111111;
+  --white: #FFFFFF;
+  --gray-light: #F4F4F4;
+  --gray-mid: #E0E0E0;
+  --gray-text: #888888;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-condensed: 'Barlow Condensed', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: #111;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  background: #111;
+}
+
+/* ── Phone Shell ── */
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+/* ── Animations ── */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { transform: scale(0.94); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.05); }
+}
+
+.slide-up   { animation: slideUp 0.35s cubic-bezier(0.32,0.72,0,1) forwards; }
+.fade-in    { animation: fadeIn  0.25s ease forwards; }
+.scale-in   { animation: scaleIn 0.3s  cubic-bezier(0.32,0.72,0,1) forwards; }
