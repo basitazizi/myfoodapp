@@ -565,11 +565,8 @@ export default function MenuPage() {
         <div style={S.heroNoise} />
         <div style={heroTopBarStyle}>
           <div style={S.brandPill}>
-            <div style={S.brandMark}>
-              <Icon name="pizza" size={18} color="#111" />
-            </div>
             <div style={S.brandText}>
-              <div style={S.brandName}>ANOOOONIM PIZZA</div>
+              <div style={S.brandName}>BASIT'S CAFE</div>
               <div style={S.brandSub}>IN-RESTAURANT ORDERING</div>
             </div>
           </div>

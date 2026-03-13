@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useMediaQuery } from '../lib/useMediaQuery'
+import { supabase } from '../lib/supabase'
 
 const S = {
   overlay: {
@@ -70,11 +72,56 @@ const S = {
     fontFamily: 'Bebas Neue, sans-serif', fontSize: 18, letterSpacing: 1,
     cursor: 'pointer',
   },
+  emailSection: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTop: '1px dashed #ddd',
+  },
+  emailTitle: {
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontWeight: 900,
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    color: '#111',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emailRow: { display: 'flex', gap: 8 },
+  emailInput: {
+    flex: 1,
+    padding: '12px 12px',
+    borderRadius: 10,
+    border: '1.5px solid #e6e6e6',
+    fontFamily: 'Barlow, sans-serif',
+    fontSize: 13,
+    outline: 'none',
+  },
+  sendBtn: (can) => ({
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: 'none',
+    background: can ? '#D32F2F' : '#eee',
+    color: can ? '#fff' : '#aaa',
+    fontFamily: 'Barlow Condensed, sans-serif',
+    fontWeight: 900,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    cursor: can ? 'pointer' : 'not-allowed',
+    whiteSpace: 'nowrap',
+  }),
+  msgOk: { marginTop: 8, fontSize: 11, color: '#2E7D32', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.6 },
+  msgErr: { marginTop: 8, fontSize: 11, color: '#D32F2F', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 0.6 },
 }
 
 export default function Receipt({ order, onDone }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   if (!order) return null
+
+  const [email, setEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sentMsg, setSentMsg] = useState('')
+  const [errMsg, setErrMsg] = useState('')
 
   const paperStyle = isDesktop ? { ...S.paper, maxWidth: 520 } : S.paper
 
@@ -84,11 +131,34 @@ export default function Receipt({ order, onDone }) {
     hour: '2-digit', minute: '2-digit',
   }).toUpperCase()
 
+  const canSend = !sending && email.trim().length > 3 && email.includes('@')
+
+  const handleSend = async () => {
+    if (!canSend) return
+    setSending(true)
+    setSentMsg('')
+    setErrMsg('')
+    try {
+      const { error } = await supabase.functions.invoke('send-receipt-email', {
+        body: {
+          email: email.trim(),
+          order_id: order.order_id,
+        },
+      })
+      if (error) throw error
+      setSentMsg('Receipt sent. Check your inbox.')
+    } catch (e) {
+      setErrMsg(e?.message || 'Failed to send receipt.')
+    } finally {
+      setSending(false)
+    }
+  }
+
   return (
     <div style={S.overlay}>
       <div style={paperStyle}>
         <div style={S.tearTop} />
-        <div style={S.restaurantName}>ANOOOONIM PIZZA</div>
+        <div style={S.restaurantName}>BASIT'S CAFE</div>
         <div style={S.tagline}>FRESHLY BAKED MADE FOR YOU</div>
         <div style={S.divider} />
 
@@ -139,6 +209,26 @@ export default function Receipt({ order, onDone }) {
         </div>
 
         <button style={S.doneBtn} onClick={onDone}>NEW ORDER →</button>
+
+        <div style={S.emailSection}>
+          <div style={S.emailTitle}>Want a copy? Enter your email</div>
+          <div style={S.emailRow}>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              type="email"
+              autoComplete="email"
+              style={S.emailInput}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            />
+            <button style={S.sendBtn(canSend)} onClick={handleSend} disabled={!canSend}>
+              {sending ? 'SENDING...' : 'SEND'}
+            </button>
+          </div>
+          {sentMsg && <div style={S.msgOk}>{sentMsg}</div>}
+          {errMsg && <div style={S.msgErr}>{errMsg}</div>}
+        </div>
       </div>
     </div>
   )
