@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { useMediaQuery } from '../lib/useMediaQuery'
-import { supabase } from '../lib/supabase'
+import emailjs from '@emailjs/browser'
+
+const EMAILJS_PUBLIC_KEY = 'hi9B0tlxyAkYFXl_B'
+const EMAILJS_SERVICE_ID = 'service_qz6tbpd'
+const EMAILJS_TEMPLATE_ID = 'template_l72974e'
+
+if (typeof window !== 'undefined') {
+  emailjs.init(EMAILJS_PUBLIC_KEY)
+}
 
 const S = {
   overlay: {
@@ -131,7 +139,7 @@ export default function Receipt({ order, onDone }) {
     hour: '2-digit', minute: '2-digit',
   }).toUpperCase()
 
-  const canSend = !sending && email.trim().length > 3 && email.includes('@')
+  const canSend = !sending && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   const handleSend = async () => {
     if (!canSend) return
@@ -139,16 +147,25 @@ export default function Receipt({ order, onDone }) {
     setSentMsg('')
     setErrMsg('')
     try {
-      const { error } = await supabase.functions.invoke('send-receipt-email', {
-        body: {
-          email: email.trim(),
-          order_id: order.order_id,
-        },
+      const orders = (Array.isArray(order.items) ? order.items : []).map((i) => ({
+        name: i?.name,
+        units: i?.qty,
+        price: i?.totalPrice,
+        customization: i?.customLabel,
+      }))
+
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        email: email.trim(),
+        order_id: order.order_id,
+        queue_number: order.queue_number,
+        date: dateStr,
+        orders,
+        total: order.total,
       })
-      if (error) throw error
-      setSentMsg('Receipt sent. Check your inbox.')
+
+      setSentMsg('Receipt sent! Check your inbox ✅')
     } catch (e) {
-      setErrMsg(e?.message || 'Failed to send receipt.')
+      setErrMsg(e?.text || e?.message || 'Failed to send receipt.')
     } finally {
       setSending(false)
     }
@@ -223,7 +240,7 @@ export default function Receipt({ order, onDone }) {
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             />
             <button style={S.sendBtn(canSend)} onClick={handleSend} disabled={!canSend}>
-              {sending ? 'SENDING...' : 'SEND'}
+              {sending ? 'SENDING...' : 'SEND RECEIPT'}
             </button>
           </div>
           {sentMsg && <div style={S.msgOk}>{sentMsg}</div>}
